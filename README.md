@@ -46,10 +46,4 @@ To run the dashboard:
 
 3. Open your web browser and navigate to `http://localhost:5000` to interact with the dashboard.
 
-## License
-This project is licensed under the MIT License - see the <a href="https://github.com/engindeniz/Cycle-Dehaze/blob/master/LICENSE">LICENSE</a> file for details.
-
-## Acknowledgments
-
-The code is based on <a href="https://github.com/vanhuyz/CycleGAN-TensorFlow" target="_blank">CycleGAN-TensorFlow</a> implementation. 
 
