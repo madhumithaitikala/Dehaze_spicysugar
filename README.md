@@ -45,6 +45,24 @@ sh demo.sh data/outdoor results/outdoor models/Hazy2GT_outdoor.pb
 sh demo.sh input_folder output_folder model_name
 ```
 
+## Web Dashboard
+
+We have provided a Flask-based web dashboard to interactively test the dehazing models (Cycle-Dehaze and AOD-Net).
+
+To run the dashboard:
+
+1. Install the required Python packages:
+   ```sh
+   pip install flask opencv-python torch torchvision tensorflow numpy skimage
+   ```
+
+2. Run the Flask application:
+   ```sh
+   python app.py
+   ```
+
+3. Open your web browser and navigate to `http://localhost:5000` to interact with the dashboard.
+
 ## License
 This project is licensed under the MIT License - see the <a href="https://github.com/engindeniz/Cycle-Dehaze/blob/master/LICENSE">LICENSE</a> file for details.
 
