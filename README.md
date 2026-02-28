@@ -1,7 +1,5 @@
 # Cycle-Dehaze: Enhanced CycleGAN for Single Image Dehazing
 
-This reposotory is our project for <a href="http://www.vision.ee.ethz.ch/ntire18/" target="_blank">NTIRE 2018 Challenge on Image Dehazing</a>. 
-
 ## Prerequisites
 
 * TensorFlow 1.4.1 or later
