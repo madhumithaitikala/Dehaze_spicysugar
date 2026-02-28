@@ -2,21 +2,6 @@
 
 This reposotory is our project for <a href="http://www.vision.ee.ethz.ch/ntire18/" target="_blank">NTIRE 2018 Challenge on Image Dehazing</a>. 
 
-<a href="https://arxiv.org/abs/1805.05308" target="_blank">Our paper</a> published in CVPR 2018 Workshop <a href="http://www.vision.ee.ethz.ch/ntire18/" target="_blank">(3rd NTIRE)</a>. Please cite our paper, if it is helpful for your research.
-
-```sh
-@inproceedings{engin2018cycle,
-  title={Cycle-Dehaze: Enhanced CycleGAN for Single Image Dehazing},
-  author={Engin, Deniz and Gen{\c{c}}, An{\i}l and Ekenel, Haz{\i}m Kemal},
-  booktitle={The IEEE Conference on Computer Vision and Pattern Recognition (CVPR) Workshops},
-  year={2018}
-}
-```
-
-## Model Architecture
-
-<img src="figs/model.png" width="600">
-
 ## Prerequisites
 
 * TensorFlow 1.4.1 or later
