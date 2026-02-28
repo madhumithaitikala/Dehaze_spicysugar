@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Dehazing</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            /* Clean Blue */
+            --primary-hover: #1d4ed8;
+            --bg-light: #f8fafc;
+            /* Very light gray/blue bg */
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --border-hover: #cbd5e1;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #0f172a;
+        }
+
+        .highlight {
+            color: var(--primary);
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+        }
+
+        /* Upload Section */
+        .flex-row {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .drop-zone {
+            flex: 1;
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            position: relative;
+            background: #fdfdfd;
+            min-height: 250px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .drop-zone:hover {
+            border-color: var(--primary);
+            background: #f1f5f9;
+        }
+
+        .upload-label {
+            text-align: center;
+            cursor: pointer;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-label span {
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        .upload-label small {
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* Preview Fix: Ensure these are visible when [hidden] is removed */
+        .preview-container {
+            position: absolute;
+            inset: 0;
+            background: white;
+            border-radius: 14px;
+            z-index: 5;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .preview-container[hidden] {
+            display: none !important;
+        }
+
+        .preview-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            /* Shows full image without cropping */
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(15, 23, 42, 0.8);
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            line-height: 1;
+            z-index: 10;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .model-toggle {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .primary-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .primary-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .secondary-btn {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 0.8rem 2rem;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .secondary-btn:hover {
+            background: var(--border);
+        }
+
+        /* Results Section */
+        .results-section {
+            margin-top: 3rem;
+            padding-top: 3rem;
+            border-top: 2px solid var(--bg-light);
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .metrics {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .metric-card {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--success);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .metric-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .comparison-container {
+            display: flex;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .img-box {
+            flex: 1;
+            background: #f1f5f9;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .img-box h3 {
+            padding: 0.75rem;
+            background: white;
+            text-align: center;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .img-box img {
+            width: 100%;
+            display: block;
+        }
+
+        .action-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Spinner */
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 768px) {
+
+            .flex-row,
+            .comparison-container,
+            .controls,
+            .result-header {
+                flex-direction: column;
+            }
+
+            .result-header {
+                gap: 1rem;
+            }
+
+            .radio-label {
+                margin-bottom: 1rem;
+                margin-right: 0;
+            }
+
+            .action-row {
+                flex-direction: column;
+            }
+
+            .action-row a,
+            .action-row button {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="glass-bg"></div>
+    <div class="container">
+        <header>
+            <h1>AI Image <span class="highlight">Dehazing</span></h1>
+            <p>Restore clarity to your hazy and foggy images instantly using our premium deep learning model.</p>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <form id="upload-form">
+                    <div class="flex-row">
+                        <div class="drop-zone" id="hazy-drop-zone">
+                            <input type="file" id="hazy-input" name="hazy_image" accept="image/*" hidden>
+                            <label for="hazy-input" class="upload-label">
+                                <div class="upload-icon">☁️</div>
+                                <span>Drop Hazy Image</span>
+                                <small>Required (JPG, PNG)</small>
+                            </label>
+                            <div class="preview-container" id="hazy-preview-container" hidden>
+                                <img id="hazy-preview" src="" alt="Hazy Preview">
+                                <button type="button" class="remove-btn" onclick="removeFile('hazy')">×</button>
+                            </div>
+                        </div>
+
+                        <div class="drop-zone optional" id="gt-drop-zone">
+                            <input type="file" id="gt-input" name="gt_image" accept="image/*" hidden>
+                            <label for="gt-input" class="upload-label">
+                                <div class="upload-icon">✨</div>
+                                <span>Drop Ground Truth</span>
+                                <small>Optional (For PSNR/SSIM)</small>
+                            </label>
+                            <div class="preview-container" id="gt-preview-container" hidden>
+                                <img id="gt-preview" src="" alt="Ground Truth Preview">
+                                <button type="button" class="remove-btn" onclick="removeFile('gt')">×</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="controls" style="flex-direction: column; gap: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div>
+                                <div
+                                    style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">
+                                    Model</div>
+                                <div class="model-toggle">
+                                    <label class="radio-label">
+                                        <input type="radio" name="model_choice" value="ensemble" checked>
+                                        <span class="custom-radio"></span> 🔗 Ensemble
+                                    </label>
+                                    <label class="radio-label">
+                                        <input type="radio" name="model_choice" value="cyclegan">
+                                        <span class="custom-radio"></span> 🌀 Cycle-Dehaze
+                                    </label>
+                                    <label class="radio-label">
+                                        <input type="radio" name="model_choice" value="aodnet">
+                                        <span class="custom-radio"></span> ⚡ AOD-Net
+                                    </label>
+                                </div>
+                            </div>
+                            <div>
+                                <div
+                                    style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 0.5rem;">
+                                    Scene</div>
+                                <div class="model-toggle">
+                                    <label class="radio-label">
+                                        <input type="radio" name="model_type" value="indoor" checked>
+                                        <span class="custom-radio"></span> 🏠 Indoor
+                                    </label>
+                                    <label class="radio-label">
+                                        <input type="radio" name="model_type" value="outdoor">
+                                        <span class="custom-radio"></span> 🌳 Outdoor
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: flex-end; width: 100%;">
+                            <button type="submit" id="submit-btn" class="primary-btn">
+                                <span class="btn-text">Dehaze Image</span>
+                                <div class="spinner hidden"></div>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </section>
+
+            <section id="results-section" class="results-section hidden">
+                <div class="result-header">
+                    <h2>Dehazing Results</h2>
+                    <div id="metrics-container" class="metrics hidden">
+                        <div class="metric-card">
+                            <span class="metric-label">PSNR</span>
+                            <span class="metric-value" id="psnr-val">--</span>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-label">SSIM</span>
+                            <span class="metric-value" id="ssim-val">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="comparison-container">
+                    <div class="img-box">
+                        <h3>Original</h3>
+                        <img id="result-original" src="" alt="Original Hazy">
+                    </div>
+                    <div class="img-box">
+                        <h3>Dehazed</h3>
+                        <img id="result-dehazed" src="" alt="Dehazed Result">
+                    </div>
+                </div>
+
+                <div class="action-row">
+                    <button class="secondary-btn" onclick="resetApp()">Try Another Image</button>
+                    <a id="download-btn" class="primary-btn" href="#" download="dehazed.png">Download Result</a>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const state = {
+            hazy: null,
+            gt: null
+        };
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // 1. Function to show the image preview immediately after upload
+        function setupPreview(type, inputId, dropZoneId, containerId, imgId) {
+            const input = document.getElementById(inputId);
+            const dropZone = document.getElementById(dropZoneId);
+            const container = document.getElementById(containerId);
+            const img = document.getElementById(imgId);
+
+            function handleFile(file) {
+                if (file && file.type.startsWith('image/')) {
+                    state[type] = file;
+
+                    // Sync to input if possible (for FormData)
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    input.files = dataTransfer.files;
+
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        img.src = e.target.result;
+                        container.removeAttribute('hidden');
+                    }
+                    reader.readAsDataURL(file);
+                }
+            }
+
+            input.addEventListener('change', function () {
+                handleFile(this.files[0]);
+            });
+
+            // Drag and Drop
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, preventDefaults, false);
+            });
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.style.borderColor = 'var(--primary)');
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, () => dropZone.style.borderColor = '');
+            });
+
+            dropZone.addEventListener('drop', function (e) {
+                const dt = e.dataTransfer;
+                handleFile(dt.files[0]);
+            });
+        }
+
+        // Initialize the previews
+        setupPreview('hazy', 'hazy-input', 'hazy-drop-zone', 'hazy-preview-container', 'hazy-preview');
+        setupPreview('gt', 'gt-input', 'gt-drop-zone', 'gt-preview-container', 'gt-preview');
+
+        // 2. Function to remove the file
+        window.removeFile = function (type) {
+            state[type] = null;
+            document.getElementById(`${type}-input`).value = '';
+            document.getElementById(`${type}-preview-container`).setAttribute('hidden', 'true');
+        }
+
+        // 3. Handle Form Submission & Show Results
+        document.getElementById('upload-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const form = this;
+            const btn = document.getElementById('submit-btn');
+            const spinner = btn.querySelector('.spinner');
+            const results = document.getElementById('results-section');
+            const btnText = btn.querySelector('.btn-text');
+
+            const hazyInput = document.getElementById('hazy-input');
+            const gtInput = document.getElementById('gt-input');
+
+            const hasHazy = state.hazy || (hazyInput.files && hazyInput.files.length > 0);
+
+            if (!hasHazy) {
+                alert("Error: You MUST upload a 'Hazy Image' to be dehazed. The Ground Truth image is optional and only used for scoring.");
+                return;
+            }
+
+            // UI Feedback
+            btn.disabled = true;
+            spinner.classList.remove('hidden');
+            if (btnText) btnText.textContent = "Processing...";
+
+            const formData = new FormData();
+
+            // Re-build FormData manually to be absolutely foolproof
+            formData.append('model_type', form.querySelector('input[name="model_type"]:checked').value);
+            formData.append('model_choice', form.querySelector('input[name="model_choice"]:checked').value);
+
+            if (state.hazy) {
+                formData.append('hazy_image', state.hazy);
+            } else if (hazyInput.files[0]) {
+                formData.append('hazy_image', hazyInput.files[0]);
+            }
+
+            if (state.gt) {
+                formData.append('gt_image', state.gt);
+            } else if (gtInput.files[0]) {
+                formData.append('gt_image', gtInput.files[0]);
+            }
+
+            try {
+                const response = await fetch('/dehaze', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to process image');
+                }
+
+                // Show results
+                const uploadedSrc = document.getElementById('hazy-preview').src;
+                document.getElementById('result-original').src = uploadedSrc;
+                document.getElementById('result-dehazed').src = data.dehazed_url;
+                document.getElementById('download-btn').href = data.dehazed_url;
+
+                // Handle Scores
+                const metricsContainer = document.getElementById('metrics-container');
+                if (data.scores) {
+                    document.getElementById('psnr-val').textContent = data.scores.psnr;
+                    document.getElementById('ssim-val').textContent = data.scores.ssim;
+                    metricsContainer.classList.remove('hidden');
+                } else {
+                    metricsContainer.classList.add('hidden');
+                }
+
+                // REVEAL OUTPUT
+                document.querySelector('.upload-section').classList.add('hidden');
+                results.classList.remove('hidden');
+                results.scrollIntoView({ behavior: 'smooth' });
+
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            } finally {
+                spinner.classList.add('hidden');
+                btn.disabled = false;
+                if (btnText) btnText.textContent = "Dehaze Image";
+            }
+        });
+
+        // 4. Reset App
+        window.resetApp = function () {
+            location.reload();
+        }
+    </script>
+</body>
+
+</html>
