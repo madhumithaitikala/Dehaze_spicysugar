@@ -46,4 +46,5 @@ To run the dashboard:
 
 3. Open your web browser and navigate to `http://localhost:5000` to interact with the dashboard.
 
+This was made for a hackathon by IIITDMK team Spicy Sugar.
 
